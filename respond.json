@@ -1,0 +1,9 @@
+{
+  "menu": "╔════════════════════╗\n║   ✨ Shikara AI ✨   ║\n╚════════════════════╝\n\nv1.0\nBy: Rehannn\nNomor: 6285256930785\nPowered by: Google Gemini\n\nKetik /command atau /cmd untuk melihat semua perintah\n\nror",
+  "command": "───── Daftar Perintah ─────\n\n• /menu       : Tampilkan informasi bot\n• /reset      : Reset riwayat chat dan instruksi\n• /set_instruction atau /seti : Atur custom instruksi AI\n• /info       : Lihat statistik interaksi Anda dengan bot\n• /mute       : Agar Shikara diam\n• /unmute     : Izinkan Shikara berbicara\n────────────────────────────",
+  "instruction_set_success": "✅ Instruksi sistem berhasil diperbarui.",
+  "reset_success": "🔄 Riwayat dan instruksi berhasil dihapus.",
+  "info_template": "ℹ️ Info Akun Anda ℹ️\n\n• Custom Instruction : {custom_instruction}\n• Bot Aktif Sejak  : {active_since}\n• Total Respon     : {total_responses}\n• Interaksi Pertama : {first_interaction}\n\nTerima kasih telah menggunakan bot ini!",
+  "unsupported_media": "❌ Bot ini tidak mendukung file atau media.",
+  "error_handling_message": "⚠️ Terjadi kesalahan. Coba lagi nanti!"
+}
