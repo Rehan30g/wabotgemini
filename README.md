@@ -1,6 +1,6 @@
 # 🤖 Shikara - WhatsApp AI Bot (Gemini)
 
-# #NOTE: TIDAK BISA JALAN DI TERMUX!
+## #NOTE: TIDAK BISA JALAN DI TERMUX!
 ---
 
 ## 🚀 Fitur Utama
