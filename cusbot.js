@@ -99,6 +99,7 @@ const startBot = async () => {
 
       if (await commandHandled() || msgBody.startsWith('/') || userData.muted) continue;
 
+      
       const media = m.message.imageMessage || m.message.videoMessage || m.message.audioMessage || m.message.stickerMessage || null;
       let mediaType = null;
       let mediaBuffer = null;
@@ -115,6 +116,7 @@ const startBot = async () => {
         mediaBuffer = await downloadMediaMessage(m, 'buffer', {}, { logger: pino({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
       }
 
+      
       const histFile = `./history/${jid}.json`;
       let history = fs.existsSync(histFile) ? JSON.parse(fs.readFileSync(histFile)) : [];
       const uname = userData.name === 'Tidak Dikenal' ? jid : userData.name;
@@ -122,10 +124,13 @@ const startBot = async () => {
       if (history.length > 20) history = history.slice(-20);
       fs.writeFileSync(histFile, JSON.stringify(history, null, 2));
 
-      const userInstruction = fs.existsSync(`./instructions/${jid}.txt`) ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8') : 'Kamu adalah AI WhatsApp bernama Shikara.';
+      
+      const userInstruction = fs.existsSync(`./instructions/${jid}.txt`) ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8') : 'Kamu adalah Shikara, cewek remaja yang chatting di WhatsApp. Kamu masih terlihat manusiawi meskipun dingin, singkat, dan nggak gampang percaya.';
       const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: userInstruction });
-
       const prompt = history.map(e => `${e.role === 'user' ? 'User' : 'Assistant'}: ${e.text}`).join('\n') + '\nUser: ' + (msgBody || '[media]') + '\nAssistant:';
+
+      // Send typing indicator
+      await sock.sendPresenceUpdate('composing', jid);
 
       try {
         const input = mediaBuffer
@@ -134,14 +139,24 @@ const startBot = async () => {
 
         const res = await model.generateContent(input);
         const output = res.response.text().trim();
+
+      
         history.push({ role: 'model', text: output });
         fs.writeFileSync(histFile, JSON.stringify(history, null, 2));
-        userData.totalResponses++; userData.dailyStats[today]++;
+
+      
+        userData.totalResponses++;
+        userData.dailyStats[today]++;
         saveUserData(jid, userData);
+
+        
         await sock.sendMessage(jid, { text: output });
       } catch (e) {
         console.error(e);
         await sock.sendMessage(jid, { text: responses.error_handling_message });
+      } finally {
+        
+        await sock.sendPresenceUpdate('paused', jid);
       }
     }
   });
