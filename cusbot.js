@@ -33,7 +33,15 @@ const startBot = async () => {
   const loadUserData = (jid) => {
     const file = `./usrdata/${jid}.json`;
     if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file));
-    const init = { totalResponses: 0, firstInteraction: new Date().toISOString(), dailyStats: {}, customInstruction: 'Default', name: '.', muted: false };
+    const init = {
+      totalResponses: 0,
+      firstInteraction: new Date().toISOString(),
+      dailyStats: {},
+      customInstruction: 'Default',
+      name: '.',
+      muted: false,
+      model: 'gemini-2.0-flash' // default model
+    };
     fs.writeFileSync(file, JSON.stringify(init, null, 2));
     return init;
   };
@@ -61,30 +69,40 @@ const startBot = async () => {
           case msgBody === '/reset':
             fs.rmSync(`./history/${jid}.json`, { force: true });
             fs.rmSync(`./instructions/${jid}.txt`, { force: true });
-            userData.dailyStats = {}; userData.customInstruction = 'Default'; saveUserData(jid, userData);
+            userData.dailyStats = {};
+            userData.customInstruction = 'Default';
+            userData.model = 'gemini-2.0-flash';
+            saveUserData(jid, userData);
             return sock.sendMessage(jid, { text: responses.reset_success });
           case msgBody.startsWith('/set_instruction') || msgBody.startsWith('/seti'):
             const inst = msgBody.replace(/\/set_instruction|\/seti/, '').trim();
             if (!inst) return sock.sendMessage(jid, { text: '⚠️ Masukkan instruksi.' });
             fs.writeFileSync(`./instructions/${jid}.txt`, inst);
-            userData.customInstruction = inst; saveUserData(jid, userData);
+            userData.customInstruction = inst;
+            saveUserData(jid, userData);
             return sock.sendMessage(jid, { text: responses.instruction_set_success });
           case msgBody === '/info':
-            const cust = fs.existsSync(`./instructions/${jid}.txt`) ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8') : 'Default';
-            const stats = Object.entries(userData.dailyStats).map(([d, c]) => `- ${d}: ${c} pesan`).join('\n') || 'Tidak ada';
+            const cust = fs.existsSync(`./instructions/${jid}.txt`)
+              ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8')
+              : 'Default';
+            const stats = Object.entries(userData.dailyStats)
+              .map(([d, c]) => `- ${d}: ${c} pesan`).join('\n') || 'Tidak ada';
             const info = responses.info_template
               .replace('{custom_instruction}', cust)
               .replace('{active_since}', sock.user?.name || '')
               .replace('{total_responses}', userData.totalResponses)
               .replace('{first_interaction}', userData.firstInteraction)
-              .replace('{daily_stats}', stats);
+              .replace('{daily_stats}', stats)
+              .replace('{model}', userData.model); // bisa ditambah di template kalau mau
             return sock.sendMessage(jid, { text: info });
           case msgBody.startsWith('/reg '):
             const name = msgBody.replace('/reg ', '').trim();
-            userData.name = name || userData.name; saveUserData(jid, userData);
+            userData.name = name || userData.name;
+            saveUserData(jid, userData);
             return sock.sendMessage(jid, { text: `Nama terdaftar: ${name}` });
           case msgBody === '/unreg':
-            userData.name = 'Tidak Dikenal'; saveUserData(jid, userData);
+            userData.name = 'Tidak Dikenal';
+            saveUserData(jid, userData);
             return sock.sendMessage(jid, { text: 'Nama dihapus.' });
           case msgBody === '/mute':
             userData.muted = true; saveUserData(jid, userData);
@@ -92,6 +110,19 @@ const startBot = async () => {
           case msgBody === '/unmute':
             userData.muted = false; saveUserData(jid, userData);
             return sock.sendMessage(jid, { text: 'AI diunmute.' });
+          case msgBody === '/model reset':
+            userData.model = 'gemini-2.0-flash';
+            saveUserData(jid, userData);
+            return sock.sendMessage(jid, { text: `Model direset ke default: ${userData.model}` });
+          case msgBody.startsWith('/model '):
+            const parts = msgBody.split(' ');
+            if (parts.length < 2) {
+              return sock.sendMessage(jid, { text: '⚠️ Gunakan: /model <model_name> atau /model reset' });
+            }
+            const newModel = parts[1].trim();
+            userData.model = newModel;
+            saveUserData(jid, userData);
+            return sock.sendMessage(jid, { text: `Model diset ke: ${newModel}` });
           default:
             return false;
         }
@@ -99,7 +130,6 @@ const startBot = async () => {
 
       if (await commandHandled() || msgBody.startsWith('/') || userData.muted) continue;
 
-      
       const media = m.message.imageMessage || m.message.videoMessage || m.message.audioMessage || m.message.stickerMessage || null;
       let mediaType = null;
       let mediaBuffer = null;
@@ -116,7 +146,6 @@ const startBot = async () => {
         mediaBuffer = await downloadMediaMessage(m, 'buffer', {}, { logger: pino({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
       }
 
-      
       const histFile = `./history/${jid}.json`;
       let history = fs.existsSync(histFile) ? JSON.parse(fs.readFileSync(histFile)) : [];
       const uname = userData.name === 'Tidak Dikenal' ? jid : userData.name;
@@ -124,10 +153,15 @@ const startBot = async () => {
       if (history.length > 20) history = history.slice(-20);
       fs.writeFileSync(histFile, JSON.stringify(history, null, 2));
 
+      const userInstruction = fs.existsSync(`./instructions/${jid}.txt`)
+        ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8')
+        : 'Kamu adalah Shikara, cewek remaja yang chatting di WhatsApp. Kamu masih terlihat manusiawi meskipun dingin, singkat, dan nggak gampang percaya.';
       
-      const userInstruction = fs.existsSync(`./instructions/${jid}.txt`) ? fs.readFileSync(`./instructions/${jid}.txt`, 'utf-8') : 'Kamu adalah Shikara, cewek remaja yang chatting di WhatsApp. Kamu masih terlihat manusiawi meskipun dingin, singkat, dan nggak gampang percaya.';
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: userInstruction });
-      const prompt = history.map(e => `${e.role === 'user' ? 'User' : 'Assistant'}: ${e.text}`).join('\n') + '\nUser: ' + (msgBody || '[media]') + '\nAssistant:';
+      // Gunakan model per-user
+      const aiModelId = userData.model || 'gemini-2.0-flash';
+      const model = genAI.getGenerativeModel({ model: aiModelId, systemInstruction: userInstruction });
+      const prompt = history.map(e => `${e.role === 'user' ? 'User' : 'Assistant'}: ${e.text}`).join('\n')
+        + '\nUser: ' + (msgBody || '[media]') + '\nAssistant:';
 
       // Send typing indicator
       await sock.sendPresenceUpdate('composing', jid);
@@ -140,22 +174,18 @@ const startBot = async () => {
         const res = await model.generateContent(input);
         const output = res.response.text().trim();
 
-      
         history.push({ role: 'model', text: output });
         fs.writeFileSync(histFile, JSON.stringify(history, null, 2));
 
-      
         userData.totalResponses++;
         userData.dailyStats[today]++;
         saveUserData(jid, userData);
 
-        
         await sock.sendMessage(jid, { text: output });
       } catch (e) {
         console.error(e);
         await sock.sendMessage(jid, { text: responses.error_handling_message });
       } finally {
-        
         await sock.sendPresenceUpdate('paused', jid);
       }
     }
