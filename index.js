@@ -21,7 +21,7 @@ const title = gradient.pastel.multiline(`
 
 const info = boxen(
   `
-  ${chalk.bold('Version')}    : ${chalk.cyan('v1.0')}
+  ${chalk.bold('Version')}    : ${chalk.cyan('v1.2')}
   ${chalk.bold('Author')}     : ${chalk.green('Rehannn')}
   ${chalk.bold('WhatsApp')}   : ${chalk.yellow('6285256930785')}
   ${chalk.bold('Powered by')} : ${chalk.magenta('Google Gemini')}
