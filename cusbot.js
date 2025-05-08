@@ -40,7 +40,7 @@ const startBot = async () => {
       customInstruction: 'Default',
       name: '.',
       muted: false,
-      model: 'gemini-2.0-flash' // default model
+      model: 'gemini-2.0-flash'
     };
     fs.writeFileSync(file, JSON.stringify(init, null, 2));
     return init;
