@@ -3,19 +3,18 @@
 ## #NOTE: TIDAK BISA JALAN DI TERMUX!
 ---
 
-## 🚀 Fitur Utama
+## Feature
 
-- ✅ Login WhatsApp via QR Code (dengan sesi disimpan)
-- 🧠 Interaksi AI berbasis Gemini (via `@google/generative-ai`)
-- 🧾 Penyimpanan histori per pengguna
-- 🗂 Instruksi custom per user
-- 🎨 Dukungan gambar, video, audio, dan stiker
-- 🔇 Fitur mute per user
-- 📊 Statistik harian penggunaan
+- ✅ Login WhatsApp via QR Code
+- 🧾 Chat Histori per user
+- 🗂 Custom Instruction
+- 🎨 Support gambar, video, audio, dan stiker
+- 🔇 Fitur mute
+- 📊 Statistik user
 
 ---
 
-## 🧱 Struktur Folder
+## Struktur 
 
 ```bash
 .
@@ -31,7 +30,7 @@
 
 ---
 
-## 🛠 Instalasi
+## 🛠 Tutor install
 
 1. **Clone repo & install dependency**
    ```bash
@@ -68,19 +67,7 @@
 
 ---
 
-## 🤖 Cara Kerja
-
-- Setiap pesan masuk akan diproses:
-  - Jika command: dieksekusi langsung
-  - Jika bukan command & AI tidak dimute:
-    - Pesan + histori terakhir dikirim ke Gemini
-    - Jawaban ditulis ke histori & dikirim ke WhatsApp
-
-- File `respond.json` berisi template pesan yang digunakan oleh bot.
-
----
-
-## 📦 Dependencies Utama
+## 📦 Dependencies
 
 - [`@whiskeysockets/baileys`](https://github.com/WhiskeySockets/Baileys)
 - [`@google/generative-ai`](https://www.npmjs.com/package/@google/generative-ai)
@@ -90,12 +77,9 @@
 
 ## ⚠️ Catatan
 
-- API Gemini versi Flash digunakan agar lebih cepat.
 - Maksimal 20 percakapan terakhir yang disimpan.
 - Bot tidak menyimpan media di disk — hanya base64 sementara untuk prompt.
 
 ---
-
-## 📜 Lisensi
 
 MIT © 2025 — Made with ☕ by Rehan
